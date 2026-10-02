@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>两只猫头贴合 — 滑动触发语音（老吴 / 内个）V2（含身体与嘴）</title>
+  <style>
+    :root{ --bg:#071423; --panel:linear-gradient(180deg,#0b2838,#041123); }
+    html,body{height:100%;margin:0;font-family:Inter, "PingFang SC", "Noto Sans SC", Arial;}
+    body{background:radial-gradient(circle at 30% 25%, #12324a 0%, #071423 30%, #02060a 100%);display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px;color:#eaf6ff}
+    .card{width:min(1200px,96vw);aspect-ratio:16/9;border-radius:12px;padding:12px;background:var(--panel);box-shadow:0 30px 80px rgba(3,8,12,0.6);border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;gap:12px;padding:6px 8px}
+    .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+    .btn{background:linear-gradient(180deg,#1b3b4d,#0b2632);color:#dff6ff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,0.4)}
+    .small{padding:6px 10px;font-size:13px}
+    .label{font-size:13px;color:#aee3ff}
+    .canvasWrap{flex:1;display:grid;place-items:center;padding:8px}
+    svg{width:100%;height:100%;display:block;border-radius:8px}
+    .controls input[type="range"]{width:220px}
+    .footer{display:flex;align-items:center;gap:10px;padding:8px;color:#9fcff6;font-size:13px}
+    .status{font-size:13px;color:#ffd7a8;margin-left:8px}
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <div class="topbar">
+      <div class="label">两只猫 — 交互语音示例（滑动控制重合度）</div>
+      <div class="controls">
+        <label class="label">重合度</label>
+        <input id="overlap" type="range" min="0" max="60" value="28">
+        <button id="triggerBtn" class="btn small">立即触碰</button>
+        <button id="exportBtn" class="btn small">导出 PNG</button>
+        <div class="status" id="audioStatus">音频：等待交互解锁</div>
+      </div>
+    </div>
+
+    <div class="canvasWrap">
+      <svg id="stage" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" aria-label="两只猫头挨着并带语音触发">
+        <defs>
+          <linearGradient id="furL" x1="0" x2="1"><stop offset="0" stop-color="#fff0d9"/><stop offset="1" stop-color="#ffd09a"/></linearGradient>
+          <linearGradient id="furR" x1="1" x2="0"><stop offset="0" stop-color="#fff5e6"/><stop offset="1" stop-color="#ffd4a6"/></linearGradient>
+          <radialGradient id="eyeShine" cx="30%" cy="25%"><stop offset="0" stop-color="#fff" stop-opacity="0.96"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        </defs>
+
+        <rect x="0" y="0" width="1200" height="600" fill="transparent"/>
+        <ellipse cx="600" cy="480" rx="420" ry="60" fill="rgba(8,14,20,0.6)"/>
+
+        <!-- left head + body -->
+        <g id="leftHead" transform="translate(360,260)">
+          <!-- body -->
+          <g id="leftBody">
+            <ellipse cx="0" cy="160" rx="120" ry="42" fill="rgba(0,0,0,0.22)"></ellipse>
+            <path d="M-95,120 C-86,80 -40,66 -6,74 C34,82 70,92 96,140 C56,156 4,168 -64,164 C-86,162 -98,148 -95,120Z"
+                  fill="url(#furL)" opacity="1" stroke="rgba(0,0,0,0.06)" stroke-width="1.2"></path>
+            <!-- front paw hint -->
+            <path d="M10,152 C22,160 38,160 48,150" stroke="#e6c79b" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.95"></path>
+            <path d="M-36,152 C-48,160 -64,160 -74,150" stroke="#e6c79b" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.95"></path>
+          </g>
+
+          <!-- head -->
+          <g class="headShape">
+            <ellipse class="face" cx="0" cy="0" rx="120" ry="110" fill="url(#furL)" stroke="rgba(0,0,0,0.06)" stroke-width="2"></ellipse>
+            <!-- ears -->
+            <path d="M-84,-72 L-110,-130 L-54,-118 Z" fill="#f6d0a2" stroke="rgba(0,0,0,0.06)"></path>
+            <path d="M84,-72 L110,-130 L54,-118 Z" fill="#f6d0a2" stroke="rgba(0,0,0,0.06)"></path>
+            <!-- eyes -->
+            <g id="leftEyes" transform="translate(0,6)">
+              <ellipse class="eyeMain" cx="-36" cy="0" rx="20" ry="24" fill="#0b1b23"></ellipse>
+              <ellipse class="eyeMain" cx="28" cy="0" rx="20" ry="24" fill="#0b1b23"></ellipse>
+            </g>
+
+            <!-- nose -->
+            <path d="M0,22 Q6,28 0,34 Q-6,28 0,22Z" fill="#ef6d92"></path>
+
+            <!-- mouth (new) -->
+            <g id="leftMouth" transform="translate(0,42)">
+              <!-- closed mouth neutral -->
+              <path d="M-14,2 Q0,8 14,2" stroke="rgba(44,24,20,0.5)" stroke-width="2.2" stroke-linecap="round" fill="none"></path>
+              <!-- small lower chin shadow -->
+              <ellipse cx="0" cy="8" rx="12" ry="4" fill="rgba(0,0,0,0.06)"></ellipse>
+            </g>
+
+            <!-- whiskers -->
+            <g stroke="rgba(45,60,75,0.9)" stroke-width="1.6" stroke-linecap="round">
+              <path d="M-50,28 C-74,26 -84,18 -110,20"></path>
+              <path d="M-50,36 C-74,36 -84,42 -110,44"></path>
+              <path d="M50,28 C74,26 84,18 110,20" transform="scale(-1,1) translate(-220,0)"></path>
+            </g>
+          </g>
+        </g>
+
+        <!-- right head + body -->
+        <g id="rightHead" transform="translate(840,260)">
+          <!-- body -->
+          <g id="rightBody">
+            <ellipse cx="0" cy="160" rx="120" ry="42" fill="rgba(0,0,0,0.22)"></ellipse>
+            <path d="M95,120 C86,80 40,66 6,74 C-34,82 -70,92 -96,140 C-56,156 -4,168 64,164 C86,162 98,148 95,120Z"
+                  fill="url(#furR)" opacity="1" stroke="rgba(0,0,0,0.06)" stroke-width="1.2"></path>
+            <!-- front paw hint -->
+            <path d="M-10,152 C-22,160 -38,160 -48,150" stroke="#f0d7b1" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.95"></path>
+            <path d="M36,152 C48,160 64,160 74,150" stroke="#f0d7b1" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.95"></path>
+          </g>
+
+          <!-- head -->
+          <g class="headShape">
+            <ellipse class="face" cx="0" cy="0" rx="120" ry="110" fill="url(#furR)" stroke="rgba(0,0,0,0.06)" stroke-width="2"></ellipse>
+            <!-- ears -->
+            <path d="M-84,-72 L-110,-130 L-54,-118 Z" fill="#f6d8b8" stroke="rgba(0,0,0,0.06)"></path>
+            <path d="M84,-72 L110,-130 L54,-118 Z" fill="#f6d8b8" stroke="rgba(0,0,0,0.06)"></path>
+            <!-- eyes -->
+            <g id="rightEyes" transform="translate(0,6)">
+              <ellipse class="eyeMain" cx="-28" cy="0" rx="20" ry="24" fill="#0b1b23"></ellipse>
+              <ellipse class="eyeMain" cx="36" cy="0" rx="20" ry="24" fill="#0b1b23"></ellipse>
+            </g>
+
+            <!-- nose -->
+            <path d="M0,22 Q-6,28 0,34 Q6,28 0,22Z" fill="#ef6d92"></path>
+
+            <!-- mouth (new) -->
+            <g id="rightMouth" transform="translate(0,42)">
+              <path d="M-14,2 Q0,8 14,2" stroke="rgba(44,24,20,0.5)" stroke-width="2.2" stroke-linecap="round" fill="none"></path>
+              <ellipse cx="0" cy="8" rx="12" ry="4" fill="rgba(0,0,0,0.06)"></ellipse>
+            </g>
+
+            <!-- whiskers -->
+            <g stroke="rgba(45,60,75,0.9)" stroke-width="1.6" stroke-linecap="round">
+              <path d="M-50,28 C-74,26 -84,18 -110,20"></path>
+              <path d="M-50,36 C-74,36 -84,42 -110,44"></path>
+              <path d="M50,28 C74,26 84,18 110,20" transform="scale(-1,1) translate(-220,0)"></path>
+            </g>
+          </g>
+        </g>
+
+        <!-- contact spark (midpoint) -->
+        <g id="contact" transform="translate(600,200)">
+          <circle id="spark" cx="0" cy="0" r="28" fill="rgba(255,255,255,0.14)" style="opacity:0;transition:opacity .18s"></circle>
+        </g>
+      </svg>
+    </div>
+
+    <div class="footer">
+      <small>提示：拖动“重合度”滑块向上会触发“老吴”，向下会触发连续“内个”。首次拖动或点击页面以解锁语音播放。</small>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const overlapEl = document.getElementById('overlap');
+      const leftHead = document.getElementById('leftHead');
+      const rightHead = document.getElementById('rightHead');
+      const spark = document.getElementById('spark');
+      const contactG = document.getElementById('contact');
+      const triggerBtn = document.getElementById('triggerBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const audioStatus = document.getElementById('audioStatus');
+
+      // positions
+      const leftBaseX = 360;
+      const rightBaseX = 840;
+      const baseY = 260;
+      const foreheadYOffset = -24;
+
+      // audio control state
+      let prevVal = parseFloat(overlapEl.value);
+      let direction = 'none'; // 'up' | 'down' | 'none'
+      let decreaseLoopActive = false;
+      let laowuPlaying = false;
+      let laowuPromise = null;
+
+      // helper: pad silent buffer to ensure min duration when TTS too short
+      function padSilent(ms){
+        return new Promise(resolve => {
+          try {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) { setTimeout(resolve, ms); return; }
+            const ctx = new Ctx();
+            const dur = Math.max(0, ms) / 1000;
+            const frames = Math.max(1, Math.ceil(dur * ctx.sampleRate));
+            const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+            const src = ctx.createBufferSource();
+            src.buffer = buffer;
+            src.connect(ctx.destination);
+            src.onended = () => { try{ctx.close()}catch{}; resolve(); };
+            src.start();
+          } catch(e) { setTimeout(resolve, ms); }
+        });
+      }
+
+      // speak "老吴" once and ensure at least 1s total
+      function speakLaowuOnce(){
+        // cancel any ongoing decrease loop
+        stopDecreaseLoop();
+
+        const synth = window.speechSynthesis;
+        if (!synth) {
+          // no synth -> pad 1s silent
+          return padSilent(1100);
+        }
+        // prevent multiple overlapping laowu plays
+        if (laowuPlaying) return laowuPromise || Promise.resolve();
+        laowuPlaying = true;
+
+        laowuPromise = new Promise((resolve) => {
+          const u = new SpeechSynthesisUtterance('老吴');
+          u.lang = 'zh-CN';
+          u.rate = 0.85;
+          u.pitch = 1.05;
+          u.volume = 1.0;
+          const voices = synth.getVoices ? synth.getVoices() : [];
+          const zh = voices.find(v => /zh|cn|chinese/i.test(v.lang || v.name));
+          if (zh) u.voice = zh;
+
+          const t0 = performance.now();
+          let finished = false;
+          u.onend = async () => {
+            finished = true;
+            const dt = performance.now() - t0;
+            if (dt >= 1000) {
+              laowuPlaying = false;
+              laowuPromise = null;
+              resolve();
+            } else {
+              await padSilent(1000 - dt + 20);
+              laowuPlaying = false;
+              laowuPromise = null;
+              resolve();
+            }
+          };
+          u.onerror = async () => {
+            await padSilent(1100);
+            laowuPlaying = false;
+            laowuPromise = null;
+            resolve();
+          };
+
+          try {
+            synth.cancel();
+            synth.speak(u);
+            // safety timeout
+            setTimeout(()=>{ if (!finished) { laowuPlaying = false; laowuPromise = null; resolve(); } }, 3500);
+          } catch(e) {
+            padSilent(1100).then(()=>{ laowuPlaying = false; laowuPromise = null; resolve(); });
+          }
+        });
+
+        return laowuPromise;
+      }
+
+      // start a fast repeated "内个" until stopped
+      function startDecreaseLoop(){
+        // stop possible laowu first
+        try { window.speechSynthesis.cancel(); } catch(e){}
+
+        if (decreaseLoopActive) return;
+        decreaseLoopActive = true;
+
+        const synth = window.speechSynthesis;
+        if (!synth) return;
+        (function loopSpeak(){
+          if (!decreaseLoopActive) return;
+          const u = new SpeechSynthesisUtterance('内个内个内个');
+          u.lang = 'zh-CN';
+          u.rate = 1.6; // fast
+          u.pitch = 1.05;
+          u.volume = 1.0;
+          const voices = synth.getVoices ? synth.getVoices() : [];
+          const zh = voices.find(v => /zh|cn|chinese/i.test(v.lang || v.name));
+          if (zh) u.voice = zh;
+          u.onend = () => {
+            setTimeout(()=>{ if (decreaseLoopActive) loopSpeak(); }, 120);
+          };
+          u.onerror = () => {
+            setTimeout(()=>{ if (decreaseLoopActive) loopSpeak(); }, 200);
+          };
+          try {
+            synth.speak(u);
+          } catch(e){
+            decreaseLoopActive = false;
+          }
+        })();
+      }
+
+      function stopDecreaseLoop(){
+        if (!decreaseLoopActive) return;
+        decreaseLoopActive = false;
+        try { window.speechSynthesis.cancel(); } catch(e){}
+      }
+
+      // update visual positions based on overlap value
+      function updatePositions(v){
+        const leftX = leftBaseX + v;
+        const rightX = rightBaseX - v;
+        leftHead.setAttribute('transform', `translate(${leftX},${baseY})`);
+        rightHead.setAttribute('transform', `translate(${rightX},${baseY})`);
+        // spark midpoint placed at forehead area
+        const midX = (leftX + rightX)/2;
+        contactG.setAttribute('transform', `translate(${midX},${baseY + foreheadYOffset})`);
+      }
+
+      // handle slider input: determine direction and trigger sounds
+      function handleOverlapChange(e){
+        const v = parseFloat(e.target.value);
+        updatePositions(v);
+
+        // determine direction
+        let newDir = 'none';
+        if (v > prevVal + 0.5) newDir = 'up';
+        else if (v < prevVal - 0.5) newDir = 'down';
+        else newDir = 'none';
+
+        if (newDir !== direction){
+          if (newDir === 'up'){
+            speakLaowuOnce();
+            stopDecreaseLoop();
+            audioStatus.textContent = '音频：检测到向上，播放“老吴”';
+          } else if (newDir === 'down'){
+            startDecreaseLoop();
+            audioStatus.textContent = '音频：检测到向下，连续播放“内个…”';
+          } else {
+            stopDecreaseLoop();
+            audioStatus.textContent = '音频：保持稳定';
+          }
+          direction = newDir;
+        }
+        prevVal = v;
+      }
+
+      // small visual flash for manual trigger
+      function flashSpark(){
+        spark.style.opacity = '1';
+        setTimeout(()=> spark.style.opacity = '0', 420);
+      }
+
+      // initial setup
+      updatePositions(prevVal);
+
+      overlapEl.addEventListener('input', handleOverlapChange);
+
+      // immediate touch button: simulate a quick up->touch->down
+      triggerBtn.addEventListener('click', ()=>{
+        const start = parseFloat(overlapEl.value);
+        const target = Math.min(60, start + 36);
+        const stepUp = setInterval(()=> {
+          let cur = parseFloat(overlapEl.value);
+          if (cur >= target) { clearInterval(stepUp); flashSpark(); return; }
+          overlapEl.value = Math.min(60, cur + 6); overlapEl.dispatchEvent(new Event('input'));
+        }, 60);
+        setTimeout(()=> {
+          const stepDown = setInterval(()=> {
+            let cur = parseFloat(overlapEl.value);
+            if (cur <= start) { clearInterval(stepDown); return; }
+            overlapEl.value = Math.max(0, cur - 6); overlapEl.dispatchEvent(new Event('input'));
+          }, 80);
+        }, 760);
+      });
+
+      // export png
+      exportBtn.addEventListener('click', ()=> {
+        const stage = document.getElementById('stage');
+        const svgData = new XMLSerializer().serializeToString(stage);
+        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(svgBlob);
+        const img = new Image();
+        img.onload = () => {
+          const scale = 2;
+          const w = stage.viewBox.baseVal.width * scale;
+          const h = stage.viewBox.baseVal.height * scale;
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#071423';
+          ctx.fillRect(0,0,w,h);
+          ctx.drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(blob => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'two_cats_heads_touching.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }, 'image/png');
+        };
+        img.onerror = ()=> { URL.revokeObjectURL(url); alert('导出失败'); };
+        img.src = url;
+      });
+
+      // unlock audio on first user interaction (improves speech success)
+      function unlockAudio(){
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) {
+            const ctx = new Ctx();
+            const b = ctx.createBuffer(1,1,ctx.sampleRate);
+            const s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0);
+            setTimeout(()=>{ try{ctx.close();}catch(e){} }, 40);
+          }
+          if (window.speechSynthesis && window.speechSynthesis.getVoices) window.speechSynthesis.getVoices();
+          audioStatus.textContent = '音频：已解锁（可播放）';
+        } catch(e){
+          audioStatus.textContent = '音频：解锁尝试失败';
+        }
+        document.removeEventListener('pointerdown', unlockAudio);
+      }
+      document.addEventListener('pointerdown', unlockAudio, { once:true });
+
+    })();
+  </script>
+</body>
+</html>
